@@ -25,3 +25,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Raw IFC BIM source files & downloads
+/ifc/
+*.ifc
+*.zip
+
+# Leftover WASM and worker artifacts if any
+/public/workers/
+/public/*.wasm

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   LayoutDashboard,
   Zap,
@@ -45,19 +45,21 @@ import { CrowdDensityHeatmap } from "@/components/crowd-density-heatmap"
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [activeTab, setActiveTab] = useState("digital-twin")
-  const [selectedAsset, setSelectedAsset] = useState("hvac-chiller-1")
+  const [selectedAsset, setSelectedAsset] = useState("fan-rtu-01")
   const [weatherTemp, setWeatherTemp] = useState(22)
   const [occupancy, setOccupancy] = useState(150)
-  const [simulationResults, setSimulationResults] = useState(null)
+  const [simulationResults, setSimulationResults] = useState<any>(null)
   const [lastUpdated, setLastUpdated] = useState(new Date())
-  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState(new Set())
-  const [forecastData, setForecastData] = useState(null)
+  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<Set<any>>(new Set())
+  const [forecastData, setForecastData] = useState<any>(null)
   const [vrMode, setVrMode] = useState(false)
   const [arMode, setArMode] = useState(false)
-  const [selectedEquipment, setSelectedEquipment] = useState("hvac-chiller-1")
+  const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const interval = setInterval(() => {
       setLastUpdated(new Date())
     }, 5000)
@@ -83,7 +85,7 @@ export default function Dashboard() {
     })
   }
 
-  const handleAcknowledgeAlert = (alertId) => {
+  const handleAcknowledgeAlert = (alertId: any) => {
     setAcknowledgedAlerts(new Set([...acknowledgedAlerts, alertId]))
   }
 
@@ -110,155 +112,179 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
   }
 
   const metrics = [
-    { label: "Temperature", value: "21°C", unit: "±1°C", status: "healthy", icon: "🌡️" },
-    { label: "Humidity", value: "50%", unit: "±5% RH", status: "healthy", icon: "💧" },
-    { label: "CO₂ Levels", value: "420 ppm", unit: "Normal", status: "healthy", icon: "💨" },
-    { label: "Energy", value: "2.4 kW", unit: "Current", status: "warning", icon: "⚡" },
+    { label: "Zone Temperature", value: "21.5°C", unit: "±1.0°C Setpoint", status: "healthy", icon: "🌡️" },
+    { label: "Relative Humidity", value: "48%", unit: "45-55% RH Target", status: "healthy", icon: "💧" },
+    { label: "Indoor CO₂", value: "420 ppm", unit: "ASHRAE Standard", status: "healthy", icon: "💨" },
+    { label: "HVAC Demand", value: "2.4 kW", unit: "Normal Load", status: "healthy", icon: "⚡" },
   ]
 
   const assets = [
     {
-      id: "hvac-chiller-1",
-      name: "HVAC Chiller 1",
-      health: 92,
+      id: "fan-rtu-01",
+      globalId: "3yWJkHo5T6DAvPfwqyWFQn",
+      expressId: 144082,
+      name: "Exhaust Fan RTU-01",
+      health: 62,
+      status: "Critical",
+      maintenance: "2024-08-15",
+      nextMaint: "2024-11-15",
+      location: "Roof - Mech Penthouse",
+      model: "Greenheck Upblast 1905 LPS",
+      efficiency: 68,
+      discipline: "HVAC",
+    },
+    {
+      id: "ahu-01",
+      globalId: "2EamY$Bkb3lP3ELdZgZgWX",
+      expressId: 92988,
+      name: "AHU-01 (Air Handling Unit)",
+      health: 94,
       status: "Healthy",
       maintenance: "2024-10-15",
       nextMaint: "2025-01-15",
-      location: "Main Floor",
-      model: "Carrier 30XA",
-      efficiency: 94,
-    },
-    {
-      id: "air-handler-2",
-      name: "Air Handler 2",
-      health: 78,
-      status: "Warning",
-      maintenance: "2024-09-20",
-      nextMaint: "2024-12-20",
-      location: "East Wing",
-      model: "Trane XR15",
-      efficiency: 87,
-    },
-    {
-      id: "dehumidifier-3",
-      name: "Dehumidifier 3",
-      health: 65,
-      status: "Critical",
-      maintenance: "2024-08-10",
-      nextMaint: "2024-11-10",
-      location: "Storage Room",
-      model: "Aprilaire 1875F",
-      efficiency: 72,
-    },
-    {
-      id: "lighting-system",
-      name: "Lighting System",
-      health: 88,
-      status: "Healthy",
-      maintenance: "2024-10-01",
-      nextMaint: "2025-01-01",
-      location: "Gallery Floor",
-      model: "Philips LED",
-      efficiency: 91,
-    },
-    {
-      id: "elevator-1",
-      name: "Elevator 1",
-      health: 95,
-      status: "Healthy",
-      maintenance: "2024-10-10",
-      nextMaint: "2025-01-10",
-      location: "Main Lobby",
-      model: "Otis Gen2",
+      location: "Level 1 - Mech Rm 118",
+      model: "Carrier Split System 63.3 kW",
       efficiency: 96,
+      discipline: "HVAC",
     },
     {
-      id: "elevator-2",
-      name: "Elevator 2",
-      health: 71,
+      id: "chiller-01",
+      globalId: "3SoaYTU5f6E8ZMh_oXQ2XU",
+      expressId: 104428,
+      name: "Chiller-01 (Screw Chiller)",
+      health: 89,
+      status: "Healthy",
+      maintenance: "2024-09-10",
+      nextMaint: "2024-12-10",
+      location: "Roof Mechanical Deck",
+      model: "Trane Air-Cooled 633-703 kW",
+      efficiency: 92,
+      discipline: "HVAC",
+    },
+    {
+      id: "vav-201",
+      globalId: "3HmORFD6X1KPVGYdFqdij4",
+      expressId: 9435,
+      name: "VAV-201 (Single Duct VAV)",
+      health: 76,
       status: "Warning",
-      maintenance: "2024-09-15",
-      nextMaint: "2024-12-15",
-      location: "East Lobby",
-      model: "Otis Gen2",
-      efficiency: 84,
+      maintenance: "2024-09-22",
+      nextMaint: "2024-12-22",
+      location: "Level 2 - Open Office 203",
+      model: "Price Modulating 400mm",
+      efficiency: 83,
+      discipline: "HVAC",
+    },
+    {
+      id: "panel-lp1",
+      globalId: "3JRYqJ5Lb4Jhlpa5ORbi8f",
+      expressId: 104908,
+      name: "Panel LP-1 (Lighting & Power)",
+      health: 91,
+      status: "Healthy",
+      maintenance: "2024-10-05",
+      nextMaint: "2025-01-05",
+      location: "Level 1 - Elec Closet 141",
+      model: "Square D 208V MLO 225A",
+      efficiency: 98,
+      discipline: "Electrical",
+    },
+    {
+      id: "pump-cw1",
+      globalId: "0VExBi7QH1SACljE9Qo8hl",
+      expressId: 162815,
+      name: "Pump P-01 (Chilled Water Inline)",
+      health: 82,
+      status: "Warning",
+      maintenance: "2024-09-01",
+      nextMaint: "2024-12-01",
+      location: "Level 1 - Mech Rm 118",
+      model: "Bell & Gossett 3.9 LPS Circulator",
+      efficiency: 85,
+      discipline: "HVAC",
     },
   ]
 
   const alerts = [
     {
       id: 1,
-      asset: "Dehumidifier 3",
-      type: "Bearing Wear",
+      asset: "Exhaust Fan RTU-01",
+      globalId: "3yWJkHo5T6DAvPfwqyWFQn",
+      type: "Motor Bearing Vibration Anomaly",
       severity: "Critical",
       failureTime: "2 days",
-      confidence: 94,
-      action: "Schedule immediate maintenance",
+      confidence: 95,
+      action: "Schedule emergency bearing replacement & dynamic balance check",
     },
     {
       id: 2,
-      asset: "Air Handler 2",
-      type: "Filter Clogging",
+      asset: "VAV-201 (Single Duct VAV)",
+      globalId: "3HmORFD6X1KPVGYdFqdij4",
+      type: "Damper Actuator Hunting / Pressure Drop",
       severity: "Major",
       failureTime: "5 days",
-      confidence: 87,
-      action: "Replace filter",
+      confidence: 88,
+      action: "Calibrate actuator stroke and inspect differential static pressure sensor",
     },
     {
       id: 3,
-      asset: "Elevator 2",
-      type: "Cable Tension",
+      asset: "Pump P-01 (Chilled Water Inline)",
+      globalId: "0VExBi7QH1SACljE9Qo8hl",
+      type: "Mechanical Seal Leakage & Cavitation",
       severity: "Major",
-      failureTime: "7 days",
-      confidence: 82,
-      action: "Inspect cables",
+      failureTime: "6 days",
+      confidence: 81,
+      action: "Inspect mechanical seal integrity and verify suction line pressure",
     },
     {
       id: 4,
-      asset: "HVAC Chiller 1",
-      type: "Refrigerant Low",
+      asset: "Chiller-01 (Screw Chiller)",
+      globalId: "3SoaYTU5f6E8ZMh_oXQ2XU",
+      type: "Condenser Approach Temperature Rise",
       severity: "Minor",
       failureTime: "14 days",
-      confidence: 76,
-      action: "Monitor levels",
+      confidence: 74,
+      action: "Clean condenser coils and inspect refrigerant subcooling",
     },
     {
       id: 5,
-      asset: "Lighting System",
-      type: "LED Degradation",
+      asset: "Panel LP-1 (Lighting & Power)",
+      globalId: "3JRYqJ5Lb4Jhlpa5ORbi8f",
+      type: "Phase B Harmonic Load Imbalance",
       severity: "Minor",
       failureTime: "30 days",
-      confidence: 68,
-      action: "Plan replacement",
+      confidence: 69,
+      action: "Redistribute single-phase branch circuit loads across bus phases",
     },
   ]
 
   const rulData = [
-    { day: "Day 1", hvac: 28, airHandler: 22, dehumidifier: 15, elevator: 32 },
-    { day: "Day 5", hvac: 26, airHandler: 20, dehumidifier: 12, elevator: 28 },
-    { day: "Day 10", hvac: 24, airHandler: 18, dehumidifier: 10, elevator: 24 },
-    { day: "Day 15", hvac: 22, airHandler: 16, dehumidifier: 8, elevator: 20 },
-    { day: "Day 20", hvac: 20, airHandler: 14, dehumidifier: 6, elevator: 16 },
-    { day: "Day 25", hvac: 18, airHandler: 12, dehumidifier: 4, elevator: 12 },
-    { day: "Day 30", hvac: 16, airHandler: 10, dehumidifier: 2, elevator: 8 },
+    { day: "Day 1", chiller: 28, ahu: 24, fan: 15, vav: 22 },
+    { day: "Day 5", chiller: 26, ahu: 22, fan: 12, vav: 20 },
+    { day: "Day 10", chiller: 24, ahu: 20, fan: 10, vav: 18 },
+    { day: "Day 15", chiller: 22, ahu: 18, fan: 8, vav: 16 },
+    { day: "Day 20", chiller: 20, ahu: 16, fan: 6, vav: 14 },
+    { day: "Day 25", chiller: 18, ahu: 14, fan: 4, vav: 12 },
+    { day: "Day 30", chiller: 16, ahu: 12, fan: 2, vav: 10 },
   ]
 
   const maintenanceSchedule = [
-    { asset: "HVAC Chiller 1", date: "2025-01-15", type: "Preventive", status: "Scheduled" },
-    { asset: "Air Handler 2", date: "2024-12-20", type: "Corrective", status: "Urgent" },
-    { asset: "Dehumidifier 3", date: "2024-11-10", type: "Corrective", status: "Critical" },
-    { asset: "Elevator 2", date: "2024-12-15", type: "Preventive", status: "Scheduled" },
-    { asset: "Lighting System", date: "2025-01-01", type: "Preventive", status: "Scheduled" },
+    { asset: "Exhaust Fan RTU-01", date: "2024-11-15", type: "Corrective", status: "Critical" },
+    { asset: "VAV-201 (Single Duct VAV)", date: "2024-12-22", type: "Corrective", status: "Urgent" },
+    { asset: "Pump P-01 (Chilled Water Inline)", date: "2024-12-01", type: "Preventive", status: "Scheduled" },
+    { asset: "Chiller-01 (Screw Chiller)", date: "2024-12-10", type: "Preventive", status: "Scheduled" },
+    { asset: "Panel LP-1 (Lighting & Power)", date: "2025-01-05", type: "Preventive", status: "Scheduled" },
+    { asset: "AHU-01 (Air Handling Unit)", date: "2025-01-15", type: "Preventive", status: "Scheduled" },
   ]
 
   const analyticsData = [
-    { name: "HVAC", value: 35, fill: "#10b981" },
-    { name: "Elevators", value: 28, fill: "#3b82f6" },
-    { name: "Lighting", value: 22, fill: "#f59e0b" },
-    { name: "Other", value: 15, fill: "#8b5cf6" },
+    { name: "HVAC & Air Distribution", value: 45, fill: "#10b981" },
+    { name: "Electrical & Distribution", value: 30, fill: "#3b82f6" },
+    { name: "Hydronic & Pumping", value: 15, fill: "#f59e0b" },
+    { name: "Plumbing & Other", value: 10, fill: "#8b5cf6" },
   ]
 
-  const getSeverityColor = (severity) => {
+  const getSeverityColor = (severity: any) => {
     switch (severity) {
       case "Critical":
         return "bg-red-500/20 text-red-400 border-red-500/30"
@@ -271,13 +297,13 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
     }
   }
 
-  const getHealthColor = (health) => {
+  const getHealthColor = (health: any) => {
     if (health >= 85) return "text-green-400"
     if (health >= 70) return "text-amber-400"
     return "text-red-400"
   }
 
-  const getStatusBg = (status) => {
+  const getStatusBg = (status: any) => {
     switch (status) {
       case "Healthy":
         return "bg-green-500/20 text-green-400 border-green-500/30"
@@ -290,6 +316,23 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
     }
   }
 
+  const handleSelectElementFrom3D = useCallback((elementInfo: any) => {
+    if (!elementInfo?.globalId && !elementInfo?.expressId) return
+    const matched = assets.find(
+      (a: any) => a.globalId === elementInfo.globalId || a.expressId === elementInfo.expressId
+    )
+    if (matched) {
+      setSelectedEquipment(matched.id)
+      setSelectedAsset(matched.id)
+    }
+  }, [assets])
+
+  const handleLocateAssetIn3D = useCallback((assetId: string) => {
+    setSelectedEquipment(assetId)
+    setSelectedAsset(assetId)
+    setActiveTab("digital-twin")
+  }, [])
+
   const renderContent = () => {
     switch (activeTab) {
       case "digital-twin":
@@ -298,7 +341,11 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
             assets={assets}
             alerts={alerts}
             selectedEquipment={selectedEquipment}
-            setSelectedEquipment={setSelectedEquipment}
+            setSelectedEquipment={(id: string) => {
+              setSelectedEquipment(id)
+              setSelectedAsset(id)
+            }}
+            onSelectElementFrom3D={handleSelectElementFrom3D}
             weatherTemp={weatherTemp}
             setWeatherTemp={setWeatherTemp}
             occupancy={occupancy}
@@ -308,6 +355,8 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
             getHealthColor={getHealthColor}
             getStatusBg={getStatusBg}
             getSeverityColor={getSeverityColor}
+            acknowledgedAlerts={acknowledgedAlerts}
+            handleAcknowledgeAlert={handleAcknowledgeAlert}
           />
         )
       case "dashboard":
@@ -318,7 +367,11 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
             alerts={alerts}
             rulData={rulData}
             selectedAsset={selectedAsset}
-            setSelectedAsset={setSelectedAsset}
+            setSelectedAsset={(id: string) => {
+              setSelectedAsset(id)
+              setSelectedEquipment(id)
+            }}
+            onLocateIn3D={handleLocateAssetIn3D}
             weatherTemp={weatherTemp}
             setWeatherTemp={setWeatherTemp}
             occupancy={occupancy}
@@ -333,11 +386,21 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
           />
         )
       case "assets":
-        return <AssetsView assets={assets} getHealthColor={getHealthColor} getStatusBg={getStatusBg} />
+        return (
+          <AssetsView
+            assets={assets}
+            selectedEquipment={selectedEquipment}
+            onLocateIn3D={handleLocateAssetIn3D}
+            getHealthColor={getHealthColor}
+            getStatusBg={getStatusBg}
+          />
+        )
       case "alerts":
         return (
           <AlertsView
             alerts={alerts}
+            assets={assets}
+            onLocateIn3D={handleLocateAssetIn3D}
             getSeverityColor={getSeverityColor}
             acknowledgedAlerts={acknowledgedAlerts}
             handleAcknowledgeAlert={handleAcknowledgeAlert}
@@ -427,14 +490,16 @@ ${simulationResults ? `Temperature: ${simulationResults.predictedTemp.toFixed(1)
               </div>
 
               <h1 className="text-xl font-bold text-white">
-                <span className="hidden sm:inline">Art Gallery </span>Digital Twin
+                <span className="hidden sm:inline">NBU Office </span>Digital Twin
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Last updated: {lastUpdated.toLocaleTimeString()}
+              <span suppressHydrationWarning>
+                Last updated: {mounted ? lastUpdated.toLocaleTimeString() : "--:--:--"}
+              </span>
             </div>
             <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
               <Bell className="w-5 h-5 text-slate-300" />
@@ -710,6 +775,7 @@ function DigitalTwinView({
   alerts,
   selectedEquipment,
   setSelectedEquipment,
+  onSelectElementFrom3D,
   weatherTemp,
   setWeatherTemp,
   occupancy,
@@ -719,9 +785,17 @@ function DigitalTwinView({
   getHealthColor,
   getStatusBg,
   getSeverityColor,
-}) {
-  const selectedAsset = assets.find((a) => a.id === selectedEquipment)
-  const [liveForeccast, setLiveForecast] = useState(null)
+  acknowledgedAlerts,
+  handleAcknowledgeAlert,
+}: any) {
+  const selectedAsset = assets.find((a: any) => a.id === selectedEquipment)
+  const [liveForeccast, setLiveForecast] = useState<any>(null)
+
+  // Filter unacknowledged critical alerts for real-time 3D warning beacons (Task 7)
+  const activeCriticalAlerts = alerts.filter(
+    (a: any) => a.severity === "Critical" && !acknowledgedAlerts?.has(a.id)
+  )
+  const activeCriticalGuids = activeCriticalAlerts.map((a: any) => a.globalId).filter(Boolean)
 
   // Generate live 48-hour forecast on component mount
   useEffect(() => {
@@ -757,10 +831,84 @@ function DigitalTwinView({
               <CardTitle className="text-white">3D Building Model</CardTitle>
               <CardDescription>Interactive virtual representation of your facility</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="w-full h-96 rounded-lg border border-slate-700/30 overflow-hidden">
-                {/* 3D Building Visualization - Now showing actual GLB model */}
-                <Building3D />
+            <CardContent className="space-y-3">
+              {/* Quick Equipment Focus Bar (Task 6: UI -> 3D link) */}
+              <div className="flex items-center justify-between pb-2 mb-1 border-b border-slate-800/60 overflow-x-auto no-scrollbar gap-2">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium shrink-0">
+                  <Cube className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Equipment Focus:</span>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                  {assets.map((asset: any) => {
+                    const isSelected = selectedEquipment === asset.id
+                    const hasActiveAlert = alerts.some((al: any) => al.globalId === asset.globalId && !acknowledgedAlerts?.has(al.id))
+                    const isCritical = asset.status === "Critical" && hasActiveAlert
+                    const isWarning = asset.status === "Warning" && hasActiveAlert
+                    return (
+                      <button
+                        key={asset.id}
+                        onClick={() => setSelectedEquipment(asset.id)}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
+                          isSelected
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-sm shadow-cyan-500/20"
+                            : "bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/40"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isCritical ? "bg-red-400 animate-pulse" : isWarning ? "bg-amber-400" : "bg-emerald-400"
+                          }`}
+                        />
+                        <span>{asset.name.split(" ")[0]}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({asset.health}%)</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Active Critical Alert Banner (Task 7: Immediate UI notification & one-click 3D locate / acknowledge) */}
+              {activeCriticalAlerts.length > 0 && (
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-red-950/40 border border-red-500/40 text-xs shadow-lg shadow-red-950/20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0" />
+                    <span className="font-semibold text-red-300">
+                      Active Critical Alert: {activeCriticalAlerts[0].asset}
+                    </span>
+                    <span className="text-slate-400 hidden sm:inline">
+                      — {activeCriticalAlerts[0].type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        const assetObj = assets.find((a: any) => a.globalId === activeCriticalAlerts[0].globalId)
+                        if (assetObj) setSelectedEquipment(assetObj.id)
+                      }}
+                      className="h-6 px-2 text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-slate-800"
+                    >
+                      Locate in 3D
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAcknowledgeAlert(activeCriticalAlerts[0].id)}
+                      className="h-6 px-2.5 text-[11px] bg-red-600 hover:bg-red-700 text-white font-medium"
+                    >
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Acknowledge
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="w-full h-[520px] rounded-lg border border-slate-700/30 overflow-hidden">
+                <Building3D
+                  selectedAssetGuid={selectedAsset?.globalId}
+                  onSelectElement={onSelectElementFrom3D}
+                  criticalAssetGuids={activeCriticalGuids}
+                />
               </div>
             </CardContent>
           </Card>
@@ -908,7 +1056,7 @@ function DigitalTwinView({
                   <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
                     <p className="text-xs font-medium text-blue-300 mb-1">📊 Trend Analysis</p>
                     <p className="text-xs text-slate-300">
-                      Conditions stable within optimal ranges for artwork preservation.
+                      Conditions stable within optimal ASHRAE thermal comfort & IAQ standards.
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
@@ -931,19 +1079,19 @@ function DigitalTwinView({
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-                  <span className="text-sm text-slate-300">HVAC</span>
+                  <span className="text-sm text-slate-300">Air Handling & Chiller</span>
                   <Badge className="bg-green-500/20 text-green-400 text-xs">Optimal</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-                  <span className="text-sm text-slate-300">Elevators</span>
-                  <Badge className="bg-amber-500/20 text-amber-400 text-xs">Monitor</Badge>
+                  <span className="text-sm text-slate-300">VAV Terminal Units</span>
+                  <Badge className="bg-amber-500/20 text-amber-400 text-xs">Warning</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-                  <span className="text-sm text-slate-300">Lighting</span>
+                  <span className="text-sm text-slate-300">Power & Lighting Panels</span>
                   <Badge className="bg-green-500/20 text-green-400 text-xs">Optimal</Badge>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-                  <span className="text-sm text-slate-300">Dehumidifier</span>
+                  <span className="text-sm text-slate-300">Rooftop Exhaust RTU</span>
                   <Badge className="bg-red-500/20 text-red-400 text-xs">Critical</Badge>
                 </div>
 
@@ -960,7 +1108,7 @@ function DigitalTwinView({
 
                 <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
                   <p className="text-xs font-medium text-blue-300 mb-1">📅 Next Maintenance</p>
-                  <p className="text-xs text-slate-300">Dehumidifier 3 - Immediate action required</p>
+                  <p className="text-xs text-slate-300">Exhaust Fan RTU-01 - Immediate bearing service required</p>
                 </div>
               </CardContent>
             </Card>
@@ -1005,8 +1153,8 @@ function DigitalTwinView({
               <h4 className="text-sm font-bold text-white mb-3">Predictive Alerts</h4>
               <div className="space-y-2">
                 {alerts
-                  .filter((a) => a.asset === selectedAsset.name)
-                  .map((alert) => (
+                  .filter((a: any) => a.asset === selectedAsset.name)
+                  .map((alert: any) => (
                     <div key={alert.id} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
                       <div className="flex items-start justify-between">
                         <div>
@@ -1020,7 +1168,7 @@ function DigitalTwinView({
                       </div>
                     </div>
                   ))}
-                {alerts.filter((a) => a.asset === selectedAsset.name).length === 0 && (
+                {alerts.filter((a: any) => a.asset === selectedAsset.name).length === 0 && (
                   <p className="text-sm text-slate-400">No active alerts for this equipment</p>
                 )}
               </div>
@@ -1108,6 +1256,7 @@ function DashboardView({
   rulData,
   selectedAsset,
   setSelectedAsset,
+  onLocateIn3D,
   weatherTemp,
   setWeatherTemp,
   occupancy,
@@ -1119,12 +1268,12 @@ function DashboardView({
   getStatusBg,
   acknowledgedAlerts,
   handleAcknowledgeAlert,
-}) {
+}: any) {
   return (
     <>
       {/* Real-Time Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, idx) => (
+        {metrics.map((metric: any, idx: number) => (
           <Card
             key={idx}
             className="border-slate-800/50 bg-slate-900/50 backdrop-blur-xl hover:bg-slate-900/70 transition-all"
@@ -1157,7 +1306,7 @@ function DashboardView({
               <CardDescription>Critical assets overview</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {assets.map((asset) => (
+              {assets.map((asset: any) => (
                 <div
                   key={asset.id}
                   className="p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition-colors cursor-pointer border border-slate-700/30"
@@ -1182,6 +1331,20 @@ function DashboardView({
                     <p>Last: {asset.maintenance}</p>
                     <p>Next: {asset.nextMaint}</p>
                   </div>
+                  {onLocateIn3D && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onLocateIn3D(asset.id)
+                      }}
+                      className="mt-2 w-full h-7 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30 border border-cyan-800/40"
+                    >
+                      <Cube className="w-3.5 h-3.5 mr-1" />
+                      Locate in 3D Model
+                    </Button>
+                  )}
                 </div>
               ))}
             </CardContent>
@@ -1196,7 +1359,7 @@ function DashboardView({
               <CardDescription>Priority-sorted by severity</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-              {alerts.map((alert) => (
+              {alerts.map((alert: any) => (
                 <div
                   key={alert.id}
                   className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)} bg-opacity-10 ${acknowledgedAlerts.has(alert.id) ? "opacity-50" : ""}`}
@@ -1233,6 +1396,22 @@ function DashboardView({
                       <CheckCircle className="w-3 h-3 mr-1" />
                       {acknowledgedAlerts.has(alert.id) ? "Acknowledged" : "Acknowledge"}
                     </Button>
+                    {onLocateIn3D && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 text-cyan-400 hover:text-cyan-300 border-cyan-800/40 bg-cyan-950/20"
+                        onClick={() => {
+                          const matched = assets.find((a: any) => a.globalId === alert.globalId)
+                          if (matched) {
+                            onLocateIn3D(matched.id)
+                          }
+                        }}
+                      >
+                        <Cube className="w-3 h-3 mr-1" />
+                        Locate 3D
+                      </Button>
+                    )}
                     <Button size="sm" variant="outline" className="text-xs h-7 bg-transparent">
                       <Ticket className="w-3 h-3 mr-1" />
                       Create Ticket
@@ -1312,7 +1491,7 @@ function DashboardView({
             {simulationResults && (
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/30 space-y-2">
                 <div>
-                  <p className="text-xs text-slate-400">Predicted Gallery Temp</p>
+                  <p className="text-xs text-slate-400">Predicted Zone Temp</p>
                   <p className="text-lg font-bold text-white">{simulationResults.predictedTemp.toFixed(1)}°C</p>
                 </div>
                 <div>
@@ -1334,21 +1513,38 @@ function DashboardView({
   )
 }
 
-function AssetsView({ assets, getHealthColor, getStatusBg }) {
+function AssetsView({ assets, selectedEquipment, onLocateIn3D, getHealthColor, getStatusBg }: any) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-4">Asset Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assets.map((asset) => (
+        <h2 className="text-2xl font-bold text-white mb-1">Asset Management</h2>
+        <p className="text-xs text-slate-400">
+          Registered BIM MEP equipment with active IoT telemetry & 3D digital twin synchronization
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {assets.map((asset: any) => {
+          const isSelected = selectedEquipment === asset.id
+          return (
             <Card
               key={asset.id}
-              className="border-slate-800/50 bg-slate-900/50 backdrop-blur-xl hover:bg-slate-900/70 transition-all"
+              className={`border transition-all ${
+                isSelected
+                  ? "border-cyan-500/60 bg-slate-900/80 ring-2 ring-cyan-500/30 shadow-lg shadow-cyan-500/10"
+                  : "border-slate-800/50 bg-slate-900/50 hover:bg-slate-900/70"
+              } backdrop-blur-xl`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-white">{asset.name}</CardTitle>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <span>{asset.name}</span>
+                      {isSelected && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">
+                          Active
+                        </span>
+                      )}
+                    </CardTitle>
                     <CardDescription>{asset.location}</CardDescription>
                   </div>
                   <Badge className={getStatusBg(asset.status)}>{asset.status}</Badge>
@@ -1387,26 +1583,37 @@ function AssetsView({ assets, getHealthColor, getStatusBg }) {
                     <p className="text-white font-medium">{asset.nextMaint}</p>
                   </div>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <Wrench className="w-4 h-4 mr-2" />
-                  Schedule Maintenance
-                </Button>
+                <div className="flex flex-col gap-2 pt-1">
+                  {onLocateIn3D && (
+                    <Button
+                      onClick={() => onLocateIn3D(asset.id)}
+                      className="w-full bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/30"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Locate in 3D Model
+                    </Button>
+                  )}
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    <Wrench className="w-4 h-4 mr-2" />
+                    Schedule Maintenance
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function AlertsView({ alerts, getSeverityColor, acknowledgedAlerts, handleAcknowledgeAlert }) {
+function AlertsView({ alerts, assets, onLocateIn3D, getSeverityColor, acknowledgedAlerts, handleAcknowledgeAlert }: any) {
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white mb-4">Alert Management</h2>
         <div className="space-y-3">
-          {alerts.map((alert) => (
+          {alerts.map((alert: any) => (
             <Card
               key={alert.id}
               className={`border-slate-800/50 bg-slate-900/50 backdrop-blur-xl ${acknowledgedAlerts.has(alert.id) ? "opacity-60" : ""}`}
@@ -1455,6 +1662,21 @@ function AlertsView({ alerts, getSeverityColor, acknowledgedAlerts, handleAcknow
                     <CheckCircle className="w-4 h-4 mr-2" />
                     {acknowledgedAlerts.has(alert.id) ? "Acknowledged" : "Acknowledge Alert"}
                   </Button>
+                  {onLocateIn3D && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const matched = assets?.find((a: any) => a.globalId === alert.globalId)
+                        if (matched) {
+                          onLocateIn3D(matched.id)
+                        }
+                      }}
+                      className="border-cyan-500/40 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/30"
+                    >
+                      <Cube className="w-4 h-4 mr-2" />
+                      Locate in 3D
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800 bg-transparent"
@@ -1472,7 +1694,7 @@ function AlertsView({ alerts, getSeverityColor, acknowledgedAlerts, handleAcknow
   )
 }
 
-function AnalyticsView({ rulData, analyticsData, maintenanceSchedule }) {
+function AnalyticsView({ rulData, analyticsData, maintenanceSchedule }: any) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Analytics & Insights</h2>
@@ -1496,10 +1718,10 @@ function AnalyticsView({ rulData, analyticsData, maintenanceSchedule }) {
                     border: "1px solid rgba(148, 163, 184, 0.2)",
                   }}
                 />
-                <Line type="monotone" dataKey="hvac" stroke="#10b981" strokeWidth={2} name="HVAC" />
-                <Line type="monotone" dataKey="airHandler" stroke="#f59e0b" strokeWidth={2} name="Air Handler" />
-                <Line type="monotone" dataKey="dehumidifier" stroke="#ef4444" strokeWidth={2} name="Dehumidifier" />
-                <Line type="monotone" dataKey="elevator" stroke="#3b82f6" strokeWidth={2} name="Elevator" />
+                <Line type="monotone" dataKey="chiller" stroke="#10b981" strokeWidth={2} name="Chiller-01" />
+                <Line type="monotone" dataKey="ahu" stroke="#3b82f6" strokeWidth={2} name="AHU-01" />
+                <Line type="monotone" dataKey="fan" stroke="#ef4444" strokeWidth={2} name="Exhaust Fan RTU" />
+                <Line type="monotone" dataKey="vav" stroke="#f59e0b" strokeWidth={2} name="VAV Units" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -1524,7 +1746,7 @@ function AnalyticsView({ rulData, analyticsData, maintenanceSchedule }) {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {analyticsData.map((entry, index) => (
+                  {analyticsData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
@@ -1548,7 +1770,7 @@ function AnalyticsView({ rulData, analyticsData, maintenanceSchedule }) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {maintenanceSchedule.map((item, idx) => (
+            {maintenanceSchedule.map((item: any, idx: number) => (
               <div
                 key={idx}
                 className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/30 flex items-start justify-between"
@@ -1591,8 +1813,8 @@ function SimulationView({
   simulationResults,
   handleSimulate,
   forecastData,
-}) {
-  const [aiSimResults, setAiSimResults] = useState(null)
+}: any) {
+  const [aiSimResults, setAiSimResults] = useState<any>(null)
   const [simLoading, setSimLoading] = useState(false)
   const [simType, setSimType] = useState("environmental")
   const [duration, setDuration] = useState(24)
@@ -1724,7 +1946,7 @@ function SimulationView({
 
             <div>
               <label className="text-sm text-slate-300 mb-3 block flex justify-between">
-                <span>Gallery Occupancy</span>
+                <span>Office Occupancy</span>
                 <span className="text-white font-medium">{occupancy} people</span>
               </label>
               <input
@@ -2013,7 +2235,17 @@ function SettingsView() {
   )
 }
 
-function NavItem({ icon, label, active = false, onClick }) {
+function NavItem({
+  icon,
+  label,
+  active = false,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  active?: boolean
+  onClick: () => void
+}) {
   return (
     <button
       onClick={onClick}

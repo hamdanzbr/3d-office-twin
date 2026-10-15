@@ -14,5 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 export const metadata = {
-      generator: 'Shah'
-    };
+  title: "NBU Office Digital Twin - Facility Management Dashboard",
+  description: "BIM-driven 3D Digital Twin and Facility Management for NBU Office Building",
+  generator: "Shah",
+}

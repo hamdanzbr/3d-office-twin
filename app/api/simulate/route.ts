@@ -15,11 +15,11 @@ export async function POST(request: Request) {
     }
 
     // AI-driven simulation system prompt
-    const systemPrompt = `You are an advanced Building Simulation Engine for an Art Gallery Digital Twin system. Your role is to generate accurate, realistic simulation results based on input parameters.
+    const systemPrompt = `You are an advanced Building Simulation Engine for an Office Digital Twin system. Your role is to generate accurate, realistic simulation results based on input parameters.
 
 SIMULATION EXPERTISE:
 - Environmental physics and thermodynamics
-- HVAC system behavior and response times
+- Commercial HVAC system behavior and response times
 - Energy consumption modeling
 - Humidity and temperature correlations
 - Occupancy impact on building systems
@@ -27,19 +27,20 @@ SIMULATION EXPERTISE:
 - Failure prediction and cascade effects
 
 CURRENT BUILDING BASELINE:
-- Gallery Size: 5,000 sq ft
-- Ceiling Height: 15 ft
-- Insulation: R-30 walls, R-50 roof
-- HVAC Capacity: 10 tons cooling, 150,000 BTU heating
-- Dehumidification: 100 pints/day capacity
+- Office Size: 45,000 sq ft across 3 floors
+- Construction: Reinforced concrete & curtain wall glazing
+- HVAC Capacity: Trane Chiller (633-703 kW), Carrier AHU (63.3 kW)
+- Ventilation: Greenheck Rooftop Fans, 21 Modulating VAV terminal units
 - Occupancy Capacity: 500 people maximum
-- Energy Baseline: 2.4 kW at 150 occupancy
+- Energy Baseline: 2.4 kW baseline demand at 150 occupancy
 
 EQUIPMENT SPECIFICATIONS:
-- HVAC Chiller 1: Carrier 30XA (92% health, 94% efficiency)
-- Air Handler 2: Trane XR15 (78% health, 87% efficiency)
-- Dehumidifier 3: Aprilaire 1875F (65% health, 72% efficiency)
-- Lighting: Philips LED (88% health, 91% efficiency)
+- AHU-01: Carrier Split System (94% health, 96% efficiency)
+- Chiller-01: Trane Air-Cooled (89% health, 92% efficiency)
+- Exhaust Fan RTU-01: Greenheck Upblast (62% health, 68% efficiency)
+- VAV-201: Price Single Duct (76% health, 83% efficiency)
+- Panel LP-1: Square D 208V (91% health, 98% efficiency)
+- Pump P-01: Bell & Gossett (82% health, 85% efficiency)
 - Current Temperature: 21.5°C
 - Current Humidity: 48% RH
 
@@ -115,7 +116,7 @@ Provide detailed simulation results in JSON format as specified. Consider the cu
       messages: [{ role: "user", content: userPrompt }],
       temperature: 0.3, // Lower temperature for more consistent results
       maxTokens: 2000,
-    })
+    } as any)
 
     console.log("[Simulation] AI response received")
 
@@ -175,17 +176,17 @@ function generateFallbackSimulation(parameters: any) {
     predictedEnergy: Number(predictedEnergy.toFixed(2)),
     timeToThreshold: Math.max(2, 8 - Math.abs(weatherTemp - 22) * 0.5),
     equipmentStress: {
-      hvac: Math.min(100, 50 + Math.abs(tempDiff) * 10),
-      dehumidifier: Math.min(100, 60 + (occupancy / 10)),
-      airHandler: Math.min(100, 55 + (occupancy / 15)),
+      chiller: Math.min(100, 50 + Math.abs(tempDiff) * 10),
+      ahu: Math.min(100, 55 + (occupancy / 15)),
+      exhaustFan: Math.min(100, 65 + (occupancy / 10)),
     },
     recommendations: [
-      predictedTemp > 22 ? "Consider pre-cooling the gallery" : "Maintain current HVAC settings",
-      occupancy > 300 ? "Monitor CO₂ levels closely" : "Normal ventilation adequate",
+      predictedTemp > 22 ? "Consider pre-cooling office zones" : "Maintain current HVAC settings",
+      occupancy > 300 ? "Monitor CO₂ and increase outdoor air damper ventilation" : "Normal ventilation adequate",
     ],
     warnings: [
-      predictedTemp > 23 ? "Temperature may exceed safe range for artwork" : null,
-      predictedEnergy > 4 ? "High energy consumption expected" : null,
+      predictedTemp > 23 ? "Zone temperature exceeding ASHRAE comfort limits" : null,
+      predictedEnergy > 4 ? "Peak electrical demand threshold exceeded" : null,
     ].filter(Boolean),
     confidence: 85,
     chartData,

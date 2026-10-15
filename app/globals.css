@@ -177,3 +177,12 @@ input[type="range"]::-moz-range-thumb {
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
+
+/* Clean horizontal scrolling without browser scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
