@@ -1,6 +1,6 @@
 # 🏢 NBU Office Facility Digital Twin
 
-A high-performance BIM (Building Information Modeling) Digital Twin web application built with **Next.js 14**, **Three.js**, and **That Open Company (`@thatopen/fragments`)**.
+A high-performance BIM (Building Information Modeling) Digital Twin web application built with **Next.js 15**, **Three.js**, and **That Open Company (`@thatopen/fragments`)**.
 
 ---
 
