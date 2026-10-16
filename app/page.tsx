@@ -869,17 +869,20 @@ function DigitalTwinView({
 
               {/* Active Critical Alert Banner (Task 7: Immediate UI notification & one-click 3D locate / acknowledge) */}
               {activeCriticalAlerts.length > 0 && (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-red-950/40 border border-red-500/40 text-xs shadow-lg shadow-red-950/20">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 p-2.5 rounded-lg bg-red-950/40 border border-red-500/40 text-xs shadow-lg shadow-red-950/20">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0" />
-                    <span className="font-semibold text-red-300">
-                      Active Critical Alert: {activeCriticalAlerts[0].asset}
-                    </span>
-                    <span className="text-slate-400 hidden sm:inline">
-                      — {activeCriticalAlerts[0].type}
-                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
+                      <span className="font-semibold text-red-300">
+                        Active Critical Alert: {activeCriticalAlerts[0].asset}
+                      </span>
+                      <span className="text-slate-400 text-[11px] sm:text-xs">
+                        <span className="hidden sm:inline">— </span>
+                        {activeCriticalAlerts[0].type}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t border-red-500/20 sm:border-t-0">
                     <Button
                       size="sm"
                       variant="ghost"
